@@ -8,9 +8,10 @@
 #include <time.h>
 #include <ncurses.h>
 #include <inttypes.h>
+#include <wchar.h>
 
 enum {LEFT=1, UP, RIGHT, DOWN, STOP_GAME='q'};
-enum {MAX_TAIL_SIZE=100, START_TAIL_SIZE=3, MAX_FOOD_SIZE=20, FOOD_EXPIRE_SECONDS=10, SPEED=20000, SEED_NUMBER=3};
+enum {MAX_TAIL_SIZE=1000, START_TAIL_SIZE=3, MAX_FOOD_SIZE=20, FOOD_EXPIRE_SECONDS=10, SPEED=20000, SEED_NUMBER=19};
 
 /*
  Хвост этто массив состоящий из координат x,y
@@ -22,10 +23,10 @@ struct tail {
 
 /*
  Еда массив точек
-  x, y - координата где установлена точка
-  put_time - время когда данная точка была установлена
-  point - внешний вид точки ('$','E'...)
-  enable - была ли точка съедена
+ x, y - координата где установлена точка
+ put_time - время когда данная точка была установлена
+ point - внешний вид точки ('$','E'...)
+ enable - была ли точка съедена
  */
 struct food {
     int x;
@@ -37,10 +38,10 @@ struct food {
 
 /*
  Голова змейки содержит в себе
-   x,y - координаты текущей позиции
-   direction - направление движения
-   tsize - размер хвоста
-   *tail -  ссылка на хвост
+ x,y - координаты текущей позиции
+ direction - направление движения
+ tsize - размер хвоста
+ *tail -  ссылка на хвост
  */
 struct snake {
     int x;
@@ -62,7 +63,7 @@ void go(struct snake *head) {
     switch (head->direction) {
         case LEFT:
             if(head->x <= 0) // Циклическое движение, что бы не
-                                  // уходить за пределы экрана
+                // уходить за пределы экрана
                 head->x = max_x;
             mvprintw(head->y, --(head->x), ch);
             break;
@@ -177,13 +178,29 @@ void putFoodSeed(struct food *fp) {
     mvprintw(fp->y, fp->x, spoint);
 }
 
+void repairSeed(struct food f[], size_t nfood, struct snake *head) {
+    for( size_t i=0; i<head->tsize; i++ )
+        for( size_t j=0; j<nfood; j++ ){
+            /* Если хвост совпадает с зерном */
+            if( f[j].x == head->tail[i].x && f[j].y == head->tail[i].y && f[i].enable ) {
+                mvprintw(0, 0, "Repair tail seed %d",j);
+                putFoodSeed(&f[j]);
+            }
+        }
+    for( size_t i=0; i<nfood; i++ )
+        for( size_t j=0; j<nfood; j++ ){
+            /* Если два зерна на одной точке */
+            if( i!=j && f[i].enable && f[j].enable && f[j].x == f[i].x && f[j].y == f[i].y && f[i].enable ) {
+                mvprintw(0, 0, "Repair same seed %d",j);
+                putFoodSeed(&f[j]);
+            }
+        }
+}
+
 /*
  Разместить еду на поле
  */
 void putFood(struct food f[], size_t number_seeds) {
-    int max_x=0, max_y=0;
-    char spoint[2] = {0};
-    getmaxyx(stdscr, max_y, max_x);
     for(size_t i=0; i<number_seeds; i++) {
         putFoodSeed(&f[i]);
     }
@@ -216,7 +233,7 @@ void printLevel(struct snake *head) {
 void printExit(struct snake *head) {
     int max_x=0, max_y=0;
     getmaxyx(stdscr, max_y, max_x);
-    mvprintw(max_y/2, max_x/2-20, "Your LEVEL is %d", head->tsize);
+    mvprintw(max_y/2, max_x/2-5, "Your LEVEL is %d", head->tsize);
 }
 int main()
 {
@@ -226,7 +243,7 @@ int main()
     initFood(food, MAX_FOOD_SIZE);
     initscr();            // Старт curses mod
     keypad(stdscr, TRUE); // Включаем F1, F2, стрелки и т.д.
-
+    
     raw();                // Откдючаем line buffering
     noecho();            // Отключаем echo() режим при вызове getch
     curs_set(FALSE);    //Отключаем курсор
@@ -243,6 +260,7 @@ int main()
             printLevel(&snake);
         }
         refreshFood(food, SEED_NUMBER);// Обновляем еду
+        repairSeed(food, SEED_NUMBER, &snake);
         timeout(100); // Задержка при отрисовке
     }
     printExit(&snake);
