@@ -1,6 +1,6 @@
 /*
  * Для компиляции необходимо добавить ключ -lncurses
- * gcc -o prog main.c -lncurses
+ * gcc -o snake main.c -lncurses
  */
 
 #include <stdio.h>
