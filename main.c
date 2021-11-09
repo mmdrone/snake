@@ -235,6 +235,12 @@ void printExit(struct snake *head) {
     getmaxyx(stdscr, max_y, max_x);
     mvprintw(max_y/2, max_x/2-5, "Your LEVEL is %d", head->tsize);
 }
+_Bool isCrash(struct snake *head) {
+    for(size_t i=1; i<head->tsize; i++)
+        if(head->x == head->tail[i].x && head->y == head->tail[i].y)
+            return 1;
+    return 0;
+}
 int main()
 {
     char ch[]="*";
@@ -253,6 +259,8 @@ int main()
     while( key_pressed != STOP_GAME ) {
         key_pressed = getch(); // Считываем клавишу
         changeDirection(&snake.direction, key_pressed); // Меняем напарвление движения
+        if(isCrash(&snake))
+            break;
         go(&snake); // Рисуем новую голову
         goTail(&snake); //Рисуем хвост
         if(haveEat(&snake, food)) {
