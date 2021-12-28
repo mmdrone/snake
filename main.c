@@ -105,6 +105,19 @@ void changeDirection(int32_t *new_direction, int32_t key) {
             break;
     }
 }
+
+int checkDirection(int32_t dir, int32_t key)
+{
+    if(KEY_DOWN == key&&dir==UP || KEY_UP == key&&dir==DOWN || KEY_LEFT == key&&dir==RIGHT || KEY_RIGHT == key&&dir==LEFT)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
 void initTail(struct tail t[], size_t size) {
     struct tail init_t={0,0};
     for(size_t i=0; i<size; i++) {
@@ -258,7 +271,10 @@ int main()
     timeout(0);    //Отключаем таймаут после нажатия клавиши в цикле
     while( key_pressed != STOP_GAME ) {
         key_pressed = getch(); // Считываем клавишу
-        changeDirection(&snake.direction, key_pressed); // Меняем напарвление движения
+        if(checkDirection(snake.direction, key_pressed)) //Проверка корректности смены направления
+        {
+            changeDirection(&snake.direction, key_pressed); // Меняем напарвление движения
+        }
         if(isCrash(&snake))
             break;
         go(&snake); // Рисуем новую голову
