@@ -190,6 +190,17 @@ void putFoodSeed(struct food *fp) {
     spoint[0] = fp->point;
     mvprintw(fp->y, fp->x, spoint);
 }
+// Мигаем зерном, перед тем как оно исчезнет
+void blinkFood(struct food fp[], size_t nfood) {
+    time_t current_time = time(NULL);
+    char spoint[2] = {0}; // как выглядит зерно '$','\0'
+    for( size_t i=0; i<nfood; i++ ) {
+        if( fp[i].enable && (current_time - fp[i].put_time) > 6 ) {
+            spoint[0] = (current_time % 2)? 'S' : 's';
+            mvprintw(fp[i].y, fp[i].x, spoint);
+        }
+    }
+}
 
 void repairSeed(struct food f[], size_t nfood, struct snake *head) {
     for( size_t i=0; i<head->tsize; i++ )
@@ -285,6 +296,7 @@ int main()
         }
         refreshFood(food, SEED_NUMBER);// Обновляем еду
         repairSeed(food, SEED_NUMBER, &snake);
+        blinkFood(food, SEED_NUMBER);
         timeout(100); // Задержка при отрисовке
     }
     printExit(&snake);
