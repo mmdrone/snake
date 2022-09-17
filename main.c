@@ -23,6 +23,12 @@ enum {
     SEED_NUMBER = 3
 };
 
+enum{
+    SNAKE1 = 1,
+    SNAKE2 = 2,
+    FOOD = 3
+};
+
 /*
  Хвост этто массив состоящий из координат x,y
  */
@@ -54,6 +60,7 @@ struct food {
  *tail -  ссылка на хвост
  */
 struct snake {
+    int number;
     int x;
     int y;
     int direction;
@@ -61,10 +68,31 @@ struct snake {
     struct tail *tail;
 } snake, snake2;
 
+void setColor(int objectType){
+    attroff(COLOR_PAIR(1));
+    attroff(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(3));
+    switch (objectType){
+        case 1:{ // SNAKE1
+            attron(COLOR_PAIR(1));
+            break;
+        }
+        case 2:{ // SNAKE2
+            attron(COLOR_PAIR(2));
+            break;
+        }
+        case 3:{ // FOOD
+            attron(COLOR_PAIR(3));
+            break;
+        }
+    }
+}
+
 /*
  Движение головы с учетом текущего направления движения
  */
 void go(struct snake *head) {
+    setColor(head->number);
     char ch[] = "@";
     int max_x = 0, max_y = 0;
     getmaxyx(stdscr, max_y, max_x); // macro - размер терминала
@@ -170,10 +198,11 @@ void initFood(struct food f[], size_t size) {
     }
 }
 
-void init(struct snake *head, struct tail *tail, size_t size) {
+void init(struct snake *head, int number, struct tail *tail, size_t size) {
     clear(); // очищаем весь экран
     initTail(tail, MAX_TAIL_SIZE);
     initHead(head);
+    head->number = number;
     head->tail = tail; // прикрепляем к голове хвост
     head->tsize = size + 1;
 }
@@ -183,10 +212,12 @@ void init(struct snake *head, struct tail *tail, size_t size) {
  */
 void goTail(struct snake *head) {
     char ch[] = "*";
+    setColor(head->number);
     mvprintw(head->tail[head->tsize - 1].y, head->tail[head->tsize - 1].x, " ");
     for (size_t i = head->tsize - 1; i > 0; i--) {
         head->tail[i] = head->tail[i - 1];
         if (head->tail[i].y || head->tail[i].x)
+            
             mvprintw(head->tail[i].y, head->tail[i].x, ch);
     }
     head->tail[0].x = head->x;
@@ -222,6 +253,7 @@ void putFoodSeed(struct food *fp) {
     fp->point = '$';
     fp->enable = 1;
     spoint[0] = fp->point;
+    setColor(FOOD);
     mvprintw(fp->y, fp->x, spoint);
 }
 
@@ -232,6 +264,7 @@ void blinkFood(struct food fp[], size_t nfood) {
     for (size_t i = 0; i < nfood; i++) {
         if (fp[i].enable && (current_time - fp[i].put_time) > 6) {
             spoint[0] = (current_time % 2) ? 'S' : 's';
+            setColor(FOOD);
             mvprintw(fp[i].y, fp[i].x, spoint);
         }
     }
@@ -290,7 +323,14 @@ _Bool haveEat(struct snake *head, struct food f[]) {
 void printLevel(struct snake *head) {
     int max_x = 0, max_y = 0;
     getmaxyx(stdscr, max_y, max_x);
-    mvprintw(0, max_x - 10, "LEVEL: %d", head->tsize);
+    if (head->number == SNAKE1){
+        setColor(head->number);
+        mvprintw(0, max_x - 10, "LEVEL: %d", head->tsize);
+    }
+    if (head->number == SNAKE2){
+        setColor(head->number);
+        mvprintw(1, max_x - 10, "LEVEL: %d", head->tsize);
+    }    
 }
 
 void printExit(struct snake *head) {
@@ -309,16 +349,19 @@ _Bool isCrash(struct snake *head) {
 int main() {
     char ch[] = "*";
     int x = 0, y = 0, key_pressed = 0;
-    init(&snake, tail, START_TAIL_SIZE); //Инициализация, хвост = 3
-    init(&snake2, tail2, START_TAIL_SIZE); //Инициализация, хвост = 3
+    init(&snake, 1, tail, START_TAIL_SIZE); //Инициализация, хвост = 3
+    init(&snake2, 2, tail2, START_TAIL_SIZE); //Инициализация, хвост = 3
     initFood(food, MAX_FOOD_SIZE);
     initscr();            // Старт curses mod
     keypad(stdscr, TRUE); // Включаем F1, F2, стрелки и т.д.
-
     raw();                // Откдючаем line buffering
     noecho();            // Отключаем echo() режим при вызове getch
     curs_set(FALSE);    //Отключаем курсор
     printHelp("  Use arrows for control. Press 'q' for EXIT");
+    start_color();
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_BLUE, COLOR_BLACK);
+    init_pair(3, COLOR_GREEN, COLOR_BLACK);
     putFood(food, SEED_NUMBER);// Кладем зерна
     timeout(0);    //Отключаем таймаут после нажатия клавиши в цикле
     while (key_pressed != STOP_GAME) {
@@ -347,6 +390,7 @@ int main() {
         blinkFood(food, SEED_NUMBER);
         timeout(100); // Задержка при отрисовке
     }
+    setColor(SNAKE1);
     printExit(&snake);
     timeout(SPEED);
     getch();
