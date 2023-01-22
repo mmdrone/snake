@@ -1,7 +1,7 @@
 /*
  * Для компиляции необходимо добавить ключ -lncurses
  * gcc -o snake main.c -lncurses
- 
+ Vallen-snake
  */
 
 #include <stdio.h>
