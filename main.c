@@ -1,13 +1,13 @@
 /*
  * Для компиляции необходимо добавить ключ -lncurses
  * gcc -o snake main.c -lncurses
- 
+ Vallen-snake
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <ncurses.h>
+#include <curses.h>
 #include <inttypes.h>
 #include <wchar.h>
 
@@ -217,7 +217,7 @@ void goTail(struct snake *head) {
     for (size_t i = head->tsize - 1; i > 0; i--) {
         head->tail[i] = head->tail[i - 1];
         if (head->tail[i].y || head->tail[i].x)
-            
+
             mvprintw(head->tail[i].y, head->tail[i].x, ch);
     }
     head->tail[0].x = head->x;
@@ -330,7 +330,7 @@ void printLevel(struct snake *head) {
     if (head->number == SNAKE2){
         setColor(head->number);
         mvprintw(1, max_x - 10, "LEVEL: %d", head->tsize);
-    }    
+    }
 }
 
 void printExit(struct snake *head) {
@@ -345,8 +345,58 @@ _Bool isCrash(struct snake *head) {
             return 1;
     return 0;
 }
+void startMenu()
+{
+    initscr();
+    noecho();
+	curs_set(FALSE);
+    cbreak();
 
+    if(has_colors() == FALSE)
+	{
+        endwin();
+		printf("Your terminal does not support color\n");
+		exit(1);
+	}
+	start_color();
+	init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_YELLOW, COLOR_BLACK);
+
+    attron(COLOR_PAIR(1));
+	mvprintw(1, 1, "1. Start");
+    attroff(COLOR_PAIR(1));
+
+    attron(COLOR_PAIR(2));
+    mvprintw(3, 1, "2. Exit");
+    attron(COLOR_PAIR(1));
+            mvprintw(7, 30, "@**************                              ****************@");
+    attron(COLOR_PAIR(2));
+            mvprintw(10, 30, "   S N A K E    S N A K E    S N A K E     S N A K E     ");
+            mvprintw(13, 30, "@**************                              ****************@");
+
+    char ch = (int) NULL;
+    while(1) {
+		ch = getch();
+        if(ch == '1') {
+            clear();
+            attron(COLOR_PAIR(2));
+            mvprintw(10, 50, "S N A K E ");
+
+            attron(COLOR_PAIR(1));
+            mvprintw(20, 50, "Press any key ...");
+            break;
+        }
+		else if(ch == '2') {
+            endwin();
+            exit(0);
+        }
+    }
+    refresh();
+    getch();
+    endwin();
+}
 int main() {
+    startMenu();
     char ch[] = "*";
     int x = 0, y = 0, key_pressed = 0;
     init(&snake, 1, tail, START_TAIL_SIZE); //Инициализация, хвост = 3
