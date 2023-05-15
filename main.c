@@ -550,8 +550,8 @@ int main() {
             changeDirection(&snake1.direction, key_pressed); // Меняем напарвление движения
         }
         autoChangeDirection(&snake2, food, SEED_NUMBER);
-        if (isCrash(&snake1))
-            break;
+//        if (isCrash(&snake1))
+//            break;
 
 
 
